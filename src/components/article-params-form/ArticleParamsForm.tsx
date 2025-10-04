@@ -1,103 +1,99 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 
 import { ArrowButton } from 'src/ui/arrow-button';
 import { Button } from 'src/ui/button';
 import { Text } from 'src/ui/text';
 import { Separator } from 'src/ui/separator';
-import { FormSettingsFont } from '../form-settings-font';
-import { FormViewSettings } from '../form-view-settings';
+import { Select } from 'src/ui/select';
+import { RadioGroup } from 'src/ui/radio-group';
 
-import { OptionType } from 'src/constants/articleProps';
+import { defaultArticleState, fontFamilyOptions, fontSizeOptions, fontColors, backgroundColors, contentWidthArr, ArticleStateType, OptionType } from 'src/constants/articleProps'
 
 import styles from './ArticleParamsForm.module.scss';
+import { useOutsideClickClose } from 'src/ui/select/hooks/useOutsideClickClose';
+import clsx from 'clsx';
 
 type ArticleParamsFormProps = {
-	selectedBackground: OptionType | null;
-	setBackground: (selected: OptionType) => void;
-	backgroundColors: OptionType[];
-	selectedContentWidth: OptionType | null;
-	setContentWidth: (selected: OptionType) => void;
-	contentWidthArr: OptionType[];
-	selectedFont: OptionType | null;
-	setSelectedFont: (selected: OptionType) => void;
-	fontFamilyOptions: OptionType[];
-	selectedSize: OptionType;
-	setSelectedSize: (value: OptionType) => void;
-	fontSizeOptions: OptionType[];
-	selectedColor: OptionType | null;
-	setColor: (selected: OptionType) => void;
-	fontColors: OptionType[];
-	onApply: () => void;
+	onApply: (params: typeof defaultArticleState) => void;
     onReset: () => void;
 }
 
 export const ArticleParamsForm = ({
-	selectedFont,
-	setSelectedFont,
-	fontFamilyOptions,
-	selectedSize,
-	setSelectedSize,
-	fontSizeOptions,
-	selectedColor,
-	setColor,
-	fontColors,
-	selectedBackground,
-	setBackground,
-	backgroundColors,
-	selectedContentWidth,
-	setContentWidth,
-	contentWidthArr,
 	onApply,
 	onReset
 	
 }: ArticleParamsFormProps) => {
 	const [isOpen, setIsOpen] = useState(false);
+	const [params, setParams] = useState(defaultArticleState);
+	const asideRef = useRef(null);
 
 
 	const handleOpen = () => {
 		setIsOpen(prev => !prev);
 	}
 
+	useOutsideClickClose({isOpen: isOpen, rootRef: asideRef, onChange: handleOpen});
+
 	const handleSubmit = (e: React.FormEvent) => {
 		e.preventDefault();
-		onApply();
+		onApply(params);
 	}
 
 	const handleReset = () => {
+		setParams(defaultArticleState);
 		onReset();
 	}
+
+	const handleOnChange = (field: keyof ArticleStateType) => {
+  		return (value: OptionType) => {
+    	setParams((prevState) => ({ ...prevState, [field]: value }));
+    };
+};
 
 	return (
 		<>
 			<ArrowButton isOpen={isOpen} onClick={handleOpen} />
-			<aside className={`${styles.container} ${isOpen ? styles.container_open : ''}`}>
+			<aside className={clsx(`${styles.container} ${isOpen ? styles.container_open : ''}`)} ref = {asideRef} >
 				<form className={styles.form} onSubmit={handleSubmit}>
 
 					<Text as = 'h2' size={31} weight={800} uppercase>
 						Задайте параметры
 					</Text>
 
-					<FormSettingsFont
-					 selectedFont = {selectedFont}
-					 setSelectedFont = {setSelectedFont}
-					 fontFamilyOptions = {fontFamilyOptions}
-					 selectedSize = {selectedSize}
-					 setSelectedSize={setSelectedSize}
-					 fontSizeOptions = {fontSizeOptions}
-					 selectedColor={selectedColor}
-					 setColor={setColor}
-					 fontColors={fontColors}
+					<Select
+						selected={params.fontFamilyOption}
+						onChange={handleOnChange('fontFamilyOption')}
+						options={fontFamilyOptions}
+						title='шрифт'
+					/>
+					<RadioGroup
+							selected={params.fontSizeOption}
+							name='radio'
+							onChange={handleOnChange('fontSizeOption')}
+							options={fontSizeOptions}
+							title='размер шрифта'
+					/>
+					<Select
+						selected={params.fontColor}
+						onChange={handleOnChange('fontColor')}
+						options={fontColors}
+						title='Цвет шрифта'
 					/>
 
 					<Separator />
 
-					<FormViewSettings
-						selectedBackground = {selectedBackground}
-						setBackground = {setBackground}
-						backgroundColors = {backgroundColors}
-						selectedContentWidth = {selectedContentWidth}
-						setContentWidth = {setContentWidth}
-						contentWidthArr = {contentWidthArr}
+					<Select 
+						selected={params.backgroundColor}
+						onChange={handleOnChange('backgroundColor')}
+						options={backgroundColors}
+						title='Цвет фона'
+					/>
+
+					<Select
+						selected={params.contentWidth}
+						onChange={handleOnChange('contentWidth')}
+						options={contentWidthArr}
+						title='Ширина контента'
 					/>
 
 					<div className={styles.bottomContainer}>
